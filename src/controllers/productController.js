@@ -1,5 +1,6 @@
 const Product = require('../models/productModel');
 const { AppError } = require('../utils/errorHandler');
+const ApiResponse = require('../utils/apiResponse');
 
 // Get all products with filtering and pagination
 exports.getProducts = async (req, res, next) => {
@@ -9,20 +10,18 @@ exports.getProducts = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     // Build query
-    const queryObj = { ...req.query };
-    const excludedFields = ['page', 'limit', 'sort', 'search'];
-    excludedFields.forEach(field => delete queryObj[field]);
+    const queryObj = {};
+
+    // Category filtering
+    if (req.query.category) {
+      queryObj.category = req.query.category;
+    }
 
     let query = Product.find(queryObj);
 
     // Search functionality
     if (req.query.search) {
       query = query.find({ $text: { $search: req.query.search } });
-    }
-
-    // Category filtering
-    if (req.query.category) {
-      query = query.find({ category: req.query.category });
     }
 
     // Sorting
@@ -40,14 +39,17 @@ exports.getProducts = async (req, res, next) => {
     const products = await query;
     const total = await Product.countDocuments(queryObj);
 
-    res.status(200).json({
-      success: true,
-      count: products.length,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      data: products,
-    });
+    return ApiResponse.successWithPagination(
+      res,
+      products,
+      {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      'Products retrieved successfully'
+    );
   } catch (error) {
     next(error);
   }
@@ -62,10 +64,7 @@ exports.getProduct = async (req, res, next) => {
       return next(new AppError('Product not found', 404));
     }
 
-    res.status(200).json({
-      success: true,
-      data: product,
-    });
+    return ApiResponse.success(res, 200, product, 'Product retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -76,10 +75,7 @@ exports.createProduct = async (req, res, next) => {
   try {
     const product = await Product.create(req.body);
 
-    res.status(201).json({
-      success: true,
-      data: product,
-    });
+    return ApiResponse.created(res, product, 'Product created successfully');
   } catch (error) {
     next(error);
   }
@@ -101,10 +97,7 @@ exports.updateProduct = async (req, res, next) => {
       return next(new AppError('Product not found', 404));
     }
 
-    res.status(200).json({
-      success: true,
-      data: product,
-    });
+    return ApiResponse.success(res, 200, product, 'Product updated successfully');
   } catch (error) {
     next(error);
   }
@@ -119,10 +112,7 @@ exports.deleteProduct = async (req, res, next) => {
       return next(new AppError('Product not found', 404));
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Product deleted successfully',
-    });
+    return ApiResponse.success(res, 200, null, 'Product deleted successfully');
   } catch (error) {
     next(error);
   }

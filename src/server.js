@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
 const dotenv = require('dotenv');
 const { errorHandler, notFound } = require('./utils/errorHandler');
 const { apiLimiter, authLimiter } = require('./middleware/rateLimitMiddleware');
@@ -11,20 +12,19 @@ dotenv.config();
 // Create Express app
 const app = express();
 
+// Security middleware
+app.use(helmet());
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Apply rate limiting
+// Apply rate limiting to API routes
 app.use('/api', apiLimiter);
-app.use('/api/auth', authLimiter);
 
 // Database connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log('Connected to MongoDB'))
 .catch((err) => console.error('MongoDB connection error:', err));
 
@@ -34,16 +34,35 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 
-// Routes
+// Root route
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Ghariyaal API' });
+  res.json({
+    success: true,
+    message: 'Welcome to Ghariyaal API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/v1/auth',
+      products: '/api/v1/products',
+      cart: '/api/v1/cart',
+      orders: '/api/v1/orders',
+    },
+  });
 });
 
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes);
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// API v1 routes
+app.use('/api/v1/auth', authLimiter, authRoutes);
+app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/cart', cartRoutes);
+app.use('/api/v1/orders', orderRoutes);
 
 // Handle unhandled routes
 app.use(notFound);

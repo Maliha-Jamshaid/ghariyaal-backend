@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const { AppError } = require('../utils/errorHandler');
+const ApiResponse = require('../utils/apiResponse');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -33,13 +34,10 @@ exports.register = async (req, res, next) => {
     // Remove password from output
     user.password = undefined;
 
-    res.status(201).json({
-      success: true,
+    return ApiResponse.created(res, {
+      user,
       token,
-      data: {
-        user,
-      },
-    });
+    }, 'User registered successfully');
   } catch (error) {
     next(error);
   }
@@ -67,13 +65,10 @@ exports.login = async (req, res, next) => {
     // Remove password from output
     user.password = undefined;
 
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, 200, {
+      user,
       token,
-      data: {
-        user,
-      },
-    });
+    }, 'Login successful');
   } catch (error) {
     next(error);
   }
@@ -84,12 +79,7 @@ exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     
-    res.status(200).json({
-      success: true,
-      data: {
-        user,
-      },
-    });
+    return ApiResponse.success(res, 200, { user }, 'User profile retrieved successfully');
   } catch (error) {
     next(error);
   }

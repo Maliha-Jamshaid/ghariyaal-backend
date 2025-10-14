@@ -7,6 +7,7 @@ const {
   updateOrderStatus,
 } = require('../controllers/orderController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
+const { orderValidation, orderStatusValidation, idParamValidation } = require('../middleware/validationMiddleware');
 
 const router = express.Router();
 
@@ -14,16 +15,14 @@ const router = express.Router();
 router.use(protect);
 
 // Customer routes
-router.post('/', createOrder);
-router.get('/my-orders', getMyOrders);
+router.post('/', orderValidation, createOrder);
+router.get('/me', getMyOrders);
 
-// Admin routes
-router.get('/admin/orders', restrictTo('admin'), getAllOrders);
-
-// Shared routes (with authorization in controller)
-router.get('/:id', getOrder);
+// Get single order (with authorization in controller)
+router.get('/:id', idParamValidation, getOrder);
 
 // Admin only routes
-router.patch('/admin/orders/:id', restrictTo('admin'), updateOrderStatus);
+router.get('/', restrictTo('admin'), getAllOrders);
+router.patch('/:id/status', restrictTo('admin'), idParamValidation, orderStatusValidation, updateOrderStatus);
 
 module.exports = router;

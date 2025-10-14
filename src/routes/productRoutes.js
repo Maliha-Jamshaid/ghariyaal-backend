@@ -7,21 +7,17 @@ const {
   deleteProduct,
 } = require('../controllers/productController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
+const { productValidation, idParamValidation, paginationValidation } = require('../middleware/validationMiddleware');
 
 const router = express.Router();
 
 // Public routes
-router.get('/', getProducts);
-router.get('/:id', getProduct);
+router.get('/', paginationValidation, getProducts);
+router.get('/:id', idParamValidation, getProduct);
 
-// Admin only routes
-router
-  .route('/admin/products')
-  .post(protect, restrictTo('admin'), createProduct);
-
-router
-  .route('/admin/products/:id')
-  .put(protect, restrictTo('admin'), updateProduct)
-  .delete(protect, restrictTo('admin'), deleteProduct);
+// Admin only routes - using proper REST structure
+router.post('/', protect, restrictTo('admin'), productValidation, createProduct);
+router.put('/:id', protect, restrictTo('admin'), idParamValidation, productValidation, updateProduct);
+router.delete('/:id', protect, restrictTo('admin'), idParamValidation, deleteProduct);
 
 module.exports = router;

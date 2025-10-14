@@ -1,6 +1,7 @@
 const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
 const { AppError } = require('../utils/errorHandler');
+const ApiResponse = require('../utils/apiResponse');
 
 // Get user's cart
 exports.getCart = async (req, res, next) => {
@@ -15,13 +16,10 @@ exports.getCart = async (req, res, next) => {
     // Calculate total price
     const total = await cart.calculateTotal();
 
-    res.status(200).json({
-      success: true,
-      data: {
-        cart,
-        total,
-      },
-    });
+    return ApiResponse.success(res, 200, {
+      cart,
+      total,
+    }, 'Cart retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -70,13 +68,10 @@ exports.addToCart = async (req, res, next) => {
 
     const total = await cart.calculateTotal();
 
-    res.status(200).json({
-      success: true,
-      data: {
-        cart,
-        total,
-      },
-    });
+    return ApiResponse.success(res, 200, {
+      cart,
+      total,
+    }, 'Item added to cart successfully');
   } catch (error) {
     next(error);
   }
@@ -120,13 +115,10 @@ exports.updateCartItem = async (req, res, next) => {
 
     const total = await cart.calculateTotal();
 
-    res.status(200).json({
-      success: true,
-      data: {
-        cart,
-        total,
-      },
-    });
+    return ApiResponse.success(res, 200, {
+      cart,
+      total,
+    }, 'Cart item updated successfully');
   } catch (error) {
     next(error);
   }
@@ -151,13 +143,10 @@ exports.removeFromCart = async (req, res, next) => {
 
     const total = await cart.calculateTotal();
 
-    res.status(200).json({
-      success: true,
-      data: {
-        cart,
-        total,
-      },
-    });
+    return ApiResponse.success(res, 200, {
+      cart,
+      total,
+    }, 'Item removed from cart successfully');
   } catch (error) {
     next(error);
   }
@@ -174,13 +163,10 @@ exports.clearCart = async (req, res, next) => {
     cart.items = [];
     await cart.save();
 
-    res.status(200).json({
-      success: true,
-      data: {
-        cart,
-        total: 0,
-      },
-    });
+    return ApiResponse.success(res, 200, {
+      cart,
+      total: 0,
+    }, 'Cart cleared successfully');
   } catch (error) {
     next(error);
   }

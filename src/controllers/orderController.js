@@ -2,6 +2,7 @@ const Order = require('../models/orderModel');
 const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
 const { AppError } = require('../utils/errorHandler');
+const ApiResponse = require('../utils/apiResponse');
 
 // Create new order
 exports.createOrder = async (req, res, next) => {
@@ -65,10 +66,7 @@ exports.createOrder = async (req, res, next) => {
     // Populate order details
     await order.populate('items.product', 'name imageUrl');
 
-    res.status(201).json({
-      success: true,
-      data: order,
-    });
+    return ApiResponse.created(res, order, 'Order created successfully');
   } catch (error) {
     next(error);
   }
@@ -84,11 +82,9 @@ exports.getAllOrders = async (req, res, next) => {
 
     const totalAmount = orders.reduce((total, order) => total + order.totalPrice, 0);
 
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, 200, orders, 'Orders retrieved successfully', {
       count: orders.length,
       totalAmount,
-      data: orders,
     });
   } catch (error) {
     next(error);
@@ -102,10 +98,8 @@ exports.getMyOrders = async (req, res, next) => {
       .populate('items.product', 'name imageUrl price')
       .sort('-createdAt');
 
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, 200, orders, 'Orders retrieved successfully', {
       count: orders.length,
-      data: orders,
     });
   } catch (error) {
     next(error);
@@ -128,10 +122,7 @@ exports.getOrder = async (req, res, next) => {
       return next(new AppError('Not authorized to view this order', 403));
     }
 
-    res.status(200).json({
-      success: true,
-      data: order,
-    });
+    return ApiResponse.success(res, 200, order, 'Order retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -163,10 +154,7 @@ exports.updateOrderStatus = async (req, res, next) => {
     order.status = status;
     await order.save();
 
-    res.status(200).json({
-      success: true,
-      data: order,
-    });
+    return ApiResponse.success(res, 200, order, 'Order status updated successfully');
   } catch (error) {
     next(error);
   }

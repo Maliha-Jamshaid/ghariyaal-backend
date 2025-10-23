@@ -84,3 +84,68 @@ exports.getMe = async (req, res, next) => {
     next(error);
   }
 };
+
+// Update user profile
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { name, email, phone, address } = req.body;
+
+    // Check if email is being changed and already exists
+    if (email && email !== req.user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return next(new AppError('Email already in use', 400));
+      }
+    }
+
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        name,
+        email,
+        phone,
+        address,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    return ApiResponse.success(res, 200, { user }, 'Profile updated successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Change password
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return next(new AppError('Please provide current and new password', 400));
+    }
+
+    // Get user with password
+    const user = await User.findById(req.user._id).select('+password');
+
+    // Check if current password is correct
+    if (!(await user.comparePassword(currentPassword))) {
+      return next(new AppError('Current password is incorrect', 401));
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    // Generate new token
+    const token = generateToken(user._id);
+
+    return ApiResponse.success(res, 200, { token }, 'Password changed successfully');
+  } catch (error) {
+    next(error);
+  }
+};

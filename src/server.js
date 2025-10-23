@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
+const path = require('path');
 const { errorHandler, notFound } = require('./utils/errorHandler');
 const { apiLimiter, authLimiter } = require('./middleware/rateLimitMiddleware');
 
@@ -12,13 +13,20 @@ dotenv.config();
 // Create Express app
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware - Configure helmet to allow images
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Serve static files for uploaded images
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // Apply rate limiting to API routes
 app.use('/api', apiLimiter);
@@ -33,6 +41,7 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // Root route
 app.get('/', (req, res) => {
@@ -45,6 +54,8 @@ app.get('/', (req, res) => {
       products: '/api/v1/products',
       cart: '/api/v1/cart',
       orders: '/api/v1/orders',
+      users: '/api/v1/users',
+      uploads: '/uploads',
     },
   });
 });
@@ -63,6 +74,7 @@ app.use('/api/v1/auth', authLimiter, authRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/cart', cartRoutes);
 app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/users', userRoutes);
 
 // Handle unhandled routes
 app.use(notFound);
@@ -72,6 +84,9 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const HOST = '0.0.0.0'; // Listen on all network interfaces
+app.listen(PORT, HOST, () => {
+  console.log(`Server is running on http://${HOST}:${PORT}`);
+  console.log(`Local: http://localhost:${PORT}`);
+  console.log(`Network: http://192.168.0.103:${PORT}`);
 });

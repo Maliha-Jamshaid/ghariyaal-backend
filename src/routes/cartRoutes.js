@@ -7,7 +7,7 @@ const {
   clearCart,
 } = require('../controllers/cartController');
 const { protect } = require('../middleware/authMiddleware');
-const { cartItemValidation, idParamValidation } = require('../middleware/validationMiddleware');
+const { cartItemValidation, productIdParamValidation } = require('../middleware/validationMiddleware');
 
 const router = express.Router();
 
@@ -21,6 +21,6 @@ router
   .put(cartItemValidation, updateCartItem)
   .delete(clearCart);
 
-router.delete('/items/:productId', idParamValidation, removeFromCart);
+router.delete('/items/:productId', productIdParamValidation, removeFromCart);
 
 module.exports = router;

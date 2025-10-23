@@ -63,8 +63,16 @@ exports.productValidation = [
     .trim()
     .notEmpty()
     .withMessage('Image URL is required')
-    .isURL()
-    .withMessage('Please provide a valid image URL'),
+    .custom((value) => {
+      // Allow localhost URLs or valid URLs
+      const localhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?\/.*$/;
+      const urlPattern = /^https?:\/\/.+/;
+      
+      if (localhostPattern.test(value) || urlPattern.test(value)) {
+        return true;
+      }
+      throw new Error('Please provide a valid image URL');
+    }),
   body('stock')
     .isInt({ min: 0 })
     .withMessage('Stock must be a non-negative integer'),
@@ -129,6 +137,16 @@ exports.idParamValidation = [
     .withMessage('ID is required')
     .isMongoId()
     .withMessage('Invalid ID format'),
+  validate,
+];
+
+// Product ID parameter validation for cart routes
+exports.productIdParamValidation = [
+  param('productId')
+    .notEmpty()
+    .withMessage('Product ID is required')
+    .isMongoId()
+    .withMessage('Invalid product ID format'),
   validate,
 ];
 

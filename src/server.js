@@ -92,8 +92,15 @@ app.use(errorHandler);
 // Start server
 const PORT = process.env.PORT || 5000;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
-app.listen(PORT, HOST, () => {
-  console.log(`Server is running on http://${HOST}:${PORT}`);
-  console.log(`Local: http://localhost:${PORT}`);
-  console.log(`Network: http://192.168.0.103:${PORT}`);
-});
+
+// Only start server if not in serverless environment (Vercel)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, HOST, () => {
+    console.log(`Server is running on http://${HOST}:${PORT}`);
+    console.log(`Local: http://localhost:${PORT}`);
+    console.log(`Network: http://192.168.0.103:${PORT}`);
+  });
+}
+
+// Export for Vercel serverless
+module.exports = app;
